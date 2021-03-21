@@ -3,6 +3,7 @@
 ## Overview
 
 This library is an my improved version of "Deep Learning from Basic 3".
+(In production)
 
 ## Requirement
 
