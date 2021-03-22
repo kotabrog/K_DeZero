@@ -14,12 +14,12 @@ This library is an my improved version of "Deep Learning from Basic 3".
 
 ```
 git clone https://github.com/kotabrog/K_DeZero.git
-cd K_DeZero
+cd kdezero
 python setup.py sdist
-pip install dist\K_DeZero-1.0.tar.gz
+pip install dist\kdezero-1.2.tar.gz
 ```
 
-This will install the library "K_DeZero".
+This will install the library "kdezero".
 
 ## sample
 
