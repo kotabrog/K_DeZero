@@ -1,5 +1,6 @@
 import numpy as np
-from .core_simple import Function, Variable
+import math
+from .core import Function, Variable
 
 
 class Square(Function):
@@ -37,3 +38,34 @@ def square(x):
 # def exp(x):
 #     f = Exp()
 #     return f(x)
+
+
+class Sin(Function):
+    def forward(self, x):
+        y = np.sin(x)
+        return y
+
+    def backward(self, gy):
+        x = self.inputs[0].data
+        gx = gy * np.cos(x)
+        return gx
+
+
+def sin(x):
+    return Sin()(x)
+
+
+def my_sin(x, threshold=0.0001):
+    y = 0
+    for i in range(100000):
+        c = (-1) ** i / math.factorial(2 * i + 1)
+        t = c * x ** (2 * i + 1)
+        y = y + t
+        if abs(t.data) < threshold:
+            break
+    return y
+
+
+def rosenbrock(x0, x1):
+    y = 100 * (x1 - x0 ** 2) ** 2 + (x0 - 1) ** 2
+    return y

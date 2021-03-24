@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="kdezero",
-    version='1.2',
+    version='1.3',
     description='This library is an my improved version of "Deep Learning from Basic 3".',
     author='Kota Suzuki',
     author_email='suzuki.kota0331@gmail.com',
