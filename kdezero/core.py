@@ -3,9 +3,29 @@ import weakref
 import contextlib
 import kdezero
 
+try:
+    import cupy
+    array_types = (np.ndarray, cupy.ndarray)
+except ImportError:
+    array_types = (np.ndarray)
+
 
 class Config:
     enable_backprop = True
+
+
+@contextlib.contextmanager
+def using_config(name, value):
+    old_value = getattr(Config, name)
+    setattr(Config, name, value)
+    try:
+        yield
+    finally:
+        setattr(Config, name, old_value)
+
+
+def no_grad():
+    return using_config('enable_backprop', False)
 
 
 class Variable:
@@ -13,7 +33,7 @@ class Variable:
 
     def __init__(self, data, name=None):
         if data is not None:
-            if not isinstance(data, np.ndarray):
+            if not isinstance(data, array_types):
                 raise TypeError('{} is not supported'.format(type(data)))
 
         self.data = data
@@ -22,13 +42,42 @@ class Variable:
         self.creator = None
         self.generation = 0
 
+    @property
+    def shape(self):
+        return self.data.shape
+
+    @property
+    def ndim(self):
+        return self.data.ndim
+
+    @property
+    def size(self):
+        return self.data.size
+
+    @property
+    def dtype(self):
+        return self.data.dtype
+
+    def __len__(self):
+        return len(self.data)
+
+    def __repr__(self):
+        if self.data is None:
+            return 'variable(None)'
+        p = str(self.data).replace('\n', '\n' + ' ' * 9)
+        return 'variable(' + p + ')'
+
     def set_creator(self, func):
         self.creator = func
         self.generation = func.generation + 1
 
+    def cleargrad(self):
+        self.grad = None
+
     def backward(self, retain_grad=False, create_graph=False):
         if self.grad is None:
-            self.grad = Variable(np.ones_like(self.data))
+            xp = kdezero.cuda.get_array_module(self.data)
+            self.grad = Variable(xp.ones_like(self.data))
 
         funcs = []
         seen_set = set()
@@ -62,34 +111,6 @@ class Variable:
                 for y in f.outputs:
                     y().grad = None
 
-    def cleargrad(self):
-        self.grad = None
-
-    @property
-    def shape(self):
-        return self.data.shape
-
-    @property
-    def ndim(self):
-        return self.data.ndim
-
-    @property
-    def size(self):
-        return self.data.size
-
-    @property
-    def dtype(self):
-        return self.data.dtype
-
-    def __len__(self):
-        return len(self.data)
-
-    def __repr__(self):
-        if self.data is None:
-            return 'variable(None)'
-        p = str(self.data).replace('\n', '\n' + ' ' * 9)
-        return 'variable(' + p + ')'
-
     def reshape(self, *shape):
         if len(shape) == 1 and isinstance(shape[0], (tuple, list)):
             shape = shape[0]
@@ -109,6 +130,30 @@ class Variable:
 
     def sum(self, axis=None, keepdims=False):
         return kdezero.functions.sum(self, axis, keepdims)
+
+    def to_cpu(self):
+        if self.data is not None:
+            self.data = kdezero.cuda.as_numpy(self.data)
+
+    def to_gpu(self):
+        if self.data is not None:
+            self.data = kdezero.cuda.as_cupy(self.data)
+
+
+class Parameter(Variable):
+    pass
+
+
+def as_variable(obj):
+    if isinstance(obj, Variable):
+        return obj
+    return Variable(obj)
+
+
+def as_array(x, array_module=np):
+    if np.isscalar(x):
+        return array_module.array(x)
+    return x
 
 
 class Function:
@@ -150,6 +195,11 @@ class Add(Function):
         return gx0, gx1
 
 
+def add(x0, x1):
+    x1 = as_array(x1, kdezero.cuda.get_array_module(x0.data))
+    return Add()(x0, x1)
+
+
 class Mul(Function):
     def forward(self, x0, x1):
         return x0 * x1
@@ -164,12 +214,21 @@ class Mul(Function):
         return gx0, gx1
 
 
+def mul(x0, x1):
+    x1 = as_array(x1, kdezero.cuda.get_array_module(x0.data))
+    return Mul()(x0, x1)
+
+
 class Neg(Function):
     def forward(self, x):
         return -x
 
     def backward(self, gy):
         return -gy
+
+
+def neg(x):
+    return Neg()(x)
 
 
 class Sub(Function):
@@ -186,6 +245,16 @@ class Sub(Function):
         return gx0, gx1
 
 
+def sub(x0, x1):
+    x1 = as_array(x1, kdezero.cuda.get_array_module(x0.data))
+    return Sub()(x0, x1)
+
+
+def rsub(x0, x1):
+    x1 = as_array(x1, kdezero.cuda.get_array_module(x0.data))
+    return Sub()(x1, x0)
+
+
 class Div(Function):
     def forward(self, x0, x1):
         return x0 / x1
@@ -200,6 +269,16 @@ class Div(Function):
         return gx0, gx1
 
 
+def div(x0, x1):
+    x1 = as_array(x1, kdezero.cuda.get_array_module(x0.data))
+    return Div()(x0, x1)
+
+
+def rdiv(x0, x1):
+    x1 = as_array(x1, kdezero.cuda.get_array_module(x0.data))
+    return Div()(x1, x0)
+
+
 class Pow(Function):
     def __init__(self, c):
         self.c = c
@@ -212,66 +291,6 @@ class Pow(Function):
         c = self.c
         gx = c * x ** (c - 1) * gy
         return gx
-
-
-@contextlib.contextmanager
-def using_config(name, value):
-    old_value = getattr(Config, name)
-    setattr(Config, name, value)
-    try:
-        yield
-    finally:
-        setattr(Config, name, old_value)
-
-
-def no_grad():
-    return using_config('enable_backprop', False)
-
-
-def as_array(x):
-    if np.isscalar(x):
-        return np.array(x)
-    return x
-
-
-def as_variable(obj):
-    if isinstance(obj, Variable):
-        return obj
-    return Variable(obj)
-
-
-def add(x0, x1):
-    x1 = as_array(x1)
-    return Add()(x0, x1)
-
-
-def mul(x0, x1):
-    x1 = as_array(x1)
-    return Mul()(x0, x1)
-
-
-def neg(x):
-    return Neg()(x)
-
-
-def sub(x0, x1):
-    x1 = as_array(x1)
-    return Sub()(x0, x1)
-
-
-def rsub(x0, x1):
-    x1 = as_array(x1)
-    return Sub()(x1, x0)
-
-
-def div(x0, x1):
-    x1 = as_array(x1)
-    return Div()(x0, x1)
-
-
-def rdiv(x0, x1):
-    x1 = as_array(x1)
-    return Div()(x1, x0)
 
 
 def pow(x, c):
@@ -291,6 +310,5 @@ def setup_variable():
     Variable.__pow__ = pow
     Variable.__getitem__ = kdezero.functions.get_item
 
-
-class Parameter(Variable):
-    pass
+    Variable.matmul = kdezero.functions.matmul
+    Variable.dot = kdezero.functions.matmul
