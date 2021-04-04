@@ -148,7 +148,7 @@ def show_progress(block_num, block_size, total_size):
     print(bar_template.format(bar, p), end='')
 
 
-def get_file(url, file_name=None):
+def get_file(url, file_name=None, file_dir=cache_dir):
     """Download a file from the `url` if it is not in the cache.
 
     The file at the `url` is downloaded to the `~/.kdezero`.
@@ -162,10 +162,10 @@ def get_file(url, file_name=None):
     """
     if file_name is None:
         file_name = url[url.rfind('/') + 1:]
-    file_path = os.path.join(cache_dir, file_name)
+    file_path = os.path.join(file_dir, file_name)
 
-    if not os.path.exists(cache_dir):
-        os.mkdir(cache_dir)
+    if not os.path.exists(file_dir):
+        os.mkdir(file_dir)
 
     if os.path.exists(file_path):
         return file_path
@@ -182,11 +182,19 @@ def get_file(url, file_name=None):
     return file_path
 
 
+def get_deconv_outsize(size, kernel_size, stride, pad):
+    return stride * (size - 1) + kernel_size - 2 + pad
+
+
+def get_conv_outsize(input_size, kernel_size, stride, pad):
+    return (input_size + pad * 2 - kernel_size) // stride + 1
+
+
 def pair(x):
     if isinstance(x, int):
         return (x, x)
     elif isinstance(x, tuple):
-        assert len() == 2
+        assert len(x) == 2
         return x
     else:
         raise ValueError

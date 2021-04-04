@@ -364,3 +364,30 @@ def accuracy(y, t):
     result = (pred == t.data)
     acc = result.mean()
     return Variable(as_array(acc))
+
+
+def dropout(x, dropout_ratio=0.5):
+    x = as_variable(x)
+
+    if kdezero.Config.train:
+        xp = cuda.get_array_module(x)
+        mask = xp.random.rand(*x.shape) > dropout_ratio
+        scale = xp.array(1.0 - dropout_ratio).astype(x.dtype)
+        y = x * mask / scale
+        return y
+    else:
+        return x
+
+
+from kdezero.functions_conv import conv2d
+from kdezero.functions_conv import deconv2d
+from kdezero.functions_conv import im2col
+from kdezero.functions_conv import col2im
+from kdezero.functions_conv import pooling
+from kdezero.core import add
+from kdezero.core import sub
+from kdezero.core import rsub
+from kdezero.core import mul
+from kdezero.core import div
+from kdezero.core import neg
+from kdezero.core import pow
