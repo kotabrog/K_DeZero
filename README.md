@@ -35,4 +35,4 @@ Soon.
 
 ## Licence
 
-[MIT](https://github.com/kotabrog/Libasm/blob/main/LICENSE)
+[MIT](https://github.com/kotabrog/K_DeZero/blob/main/LICENSE)
