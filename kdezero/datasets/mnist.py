@@ -42,14 +42,20 @@ class MNIST(Dataset):
         img = np.zeros((H * row, W * col))
         for r in range(row):
             for c in range(col):
-                img[r * H: (r + 1) * H, c + W: (c + 1) * W] = self.data[
+                img[r * H: (r + 1) * H, c * W: (c + 1) * W] = self.data[
                     np.random.randint(0, len(self.data) - 1)
                 ].reshape(H, W)
-        plt.show(img, cmap='gray', interpolation='nearest')
+        plt.imshow(img, cmap='gray', interpolation='nearest')
+        plt.axis('off')
+        plt.show()
+
+    def one_show(self, index):
+        H, W = 28, 28
+        img = self.data[index].reshape(H, W)
+        plt.imshow(img, cmap='gray')
         plt.axis('off')
         plt.show()
 
     @staticmethod
     def labels():
         return {0: '0', 1: '1', 2: '2', 3: '3', 4: '4', 5: '5', 6: '6', 7: '7', 8: '8', 9: '9'}
-

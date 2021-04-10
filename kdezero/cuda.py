@@ -21,7 +21,7 @@ def get_array_module(x):
     """
     if isinstance(x, Variable):
         x = x.data
-    
+
     if not gpu_enable:
         return np
     xp = cp.get_array_module(x)
