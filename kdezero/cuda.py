@@ -10,9 +10,18 @@ from kdezero import Variable
 
 
 def get_array_module(x):
+    """Returns the array module for 'x'.
+
+    Args:
+        x (kdezero.Variable or numpy.ndarray or cupy.ndarray):
+            Values to determine whether NumPy or CuPy should be used.
+
+    Returns:
+        module: 'cupy' or 'numpy' is returned based on the argument.
+    """
     if isinstance(x, Variable):
         x = x.data
-    
+
     if not gpu_enable:
         return np
     xp = cp.get_array_module(x)
@@ -20,6 +29,15 @@ def get_array_module(x):
 
 
 def as_numpy(x):
+    """Convert to numpy.ndarray.
+
+    Args:
+        x (numpy.ndarray or cupy.ndarray):
+            Arbitrary object that can be converted to numpy.ndarray.
+
+    Returns:
+        numpy.ndarray: Converted array.
+    """
     if isinstance(x, Variable):
         x = x.data
 
@@ -31,6 +49,15 @@ def as_numpy(x):
 
 
 def as_cupy(x):
+    """Convert to cupy.ndarray.
+
+    Args:
+        x (numpy.ndarray or cupy.ndarray):
+            Arbitrary object that can be converted to cupy.ndarray.
+
+    Returns:
+        cupy.ndarray: Converted array.
+    """
     if isinstance(x, Variable):
         x = x.data
 

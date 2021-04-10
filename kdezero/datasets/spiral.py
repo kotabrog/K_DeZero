@@ -27,5 +27,18 @@ def get_spiral(train=True):
 
 
 class Spiral(Dataset):
+    """Spiral data for classification problems.
+    The number of data is 100.
+    The number of class is 3.
+    And the number of dimensions is 2.
+
+    Attribute:
+        Attribute:
+        data (ndarray): shape is (300, 2)
+        label (ndarray): shape is (300,)
+        train (bool):
+            Flag for learning.
+            The internal random number is changed depending on whether train is True or not.
+    """
     def prepare(self):
         self.data, self.label = get_spiral(self.train)

@@ -3,6 +3,32 @@ from kdezero.datasets import Dataset
 
 
 class SinCurve(Dataset):
+    """The data is a sine curve, and the label advances one index by one.
+    The number of data is 1000.
+
+    Attribute:
+        Attribute:
+        data (ndarray):
+        label (ndarray):
+        train (bool):
+            Flag for learning.
+            If train is True, data is sin and noise.
+            If not, data is cos.
+    Examples:
+        >>> print(dataset.data[:5])
+            [[-0.04955855]
+            [ 0.03048039]
+            [-0.01378722]
+            [-0.02327317]
+            [ 0.04658464]]
+
+        >>> print(dataset.label[:5])
+            [[ 0.03048039]
+            [-0.01378722]
+            [-0.02327317]
+            [ 0.04658464]
+            [ 0.02806842]]
+    """
     def prepare(self):
         num_data = 1000
         dtype = np.float64

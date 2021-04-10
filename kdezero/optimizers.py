@@ -90,3 +90,12 @@ class Adam(Optimizer):
         m += (1 - beta1) * (grad - m)
         v += (1 - beta2) * (grad * grad - v)
         param.data -= self.lr * m / (xp.sqrt(v) + eps)
+
+
+class WeightDecay:
+    def __init__(self, rate):
+        self.rate = rate
+
+    def __call__(self, params):
+        for param in params:
+            param.grad.data += self.rate * param.data
