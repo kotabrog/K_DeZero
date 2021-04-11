@@ -4,6 +4,8 @@ from kdezero.utils import cache_dir
 
 
 def show_progress(block_num, block_size, total_size):
+    """function to display progress bar for urllib.request.urlretrieve.
+    """
     bar_template = "\r[{}] {:.2f}%"
 
     downloaded = block_num * block_size
@@ -16,16 +18,19 @@ def show_progress(block_num, block_size, total_size):
 
 
 def get_file(url, file_name=None, file_dir=cache_dir):
-    """Download a file from the `url` if it is not in the cache.
+    """Download a file from the 'url' if it is not in the cache.
 
-    The file at the `url` is downloaded to the `~/.kdezero`.
+    By default, the file at the 'url' is downloaded to the '~/.kdezero'.
     Args:
         url (str): URL of the file.
-        file_name (str): Name of the file. It `None` is specified the original
+        file_name (str, optional):
+            Name of the file. It 'None' is specified the original
             file name is used.
+        file_dir (str, optional):
+            Output directory.
 
     Returns:
-        str: Absolute path to the saved file.
+        str: path to the saved file. (cache_dir / file_name)
     """
     if file_name is None:
         file_name = url[url.rfind('/') + 1:]

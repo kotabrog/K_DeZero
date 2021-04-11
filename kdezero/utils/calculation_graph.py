@@ -27,6 +27,18 @@ def _dot_func(f):
 
 
 def get_dot_graph(output, verbose=True):
+    """From the variables, create text that describes the structure of the model,
+    written in graphviz-compatible dot language.
+
+    Args:
+        output (kdezero.Variable):
+            Variables that retroactively create graphs with backpropagation.
+        verbose (bool, optional):
+            Whether to display in more detail. (default: True)
+
+    Returns:
+        string: dot text
+    """
     txt = ''
     funcs = []
     seen_set = set()
@@ -51,6 +63,20 @@ def get_dot_graph(output, verbose=True):
 
 
 def plot_dot_graph(output, verbose=True, to_file='graph.png'):
+    """From the variables,
+    use graphviz to create an image that represents the composition of the model.
+
+    Args:
+        output (kdezero.Variable):
+            Variables that retroactively create graphs with backpropagation.
+        verbose (bool, optional):
+            Whether to display in more detail. (default: True)
+        to_file (string, optional):
+            File name to output. (default: 'graph.png')
+
+    Note:
+        Display the image if it can be displayed using a notebook etc.
+    """
     dot_graph = get_dot_graph(output, verbose)
 
     if not os.path.exists(cache_dir):
