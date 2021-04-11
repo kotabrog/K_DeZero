@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="kdezero",
-    version='1.6',
+    version='1.7',
     description='This library is an my improved version of "Deep Learning from Basic 3".',
     long_description = long_description,
     long_description_content_type = "text/markdown",
