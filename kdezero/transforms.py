@@ -95,8 +95,8 @@ class Normalize:
     """Normalize a NumPy array with mean and standard deviation.
 
     Args:
-        mean (float or sequence): mean for all values or sequence of means for
-         each channel.
+        mean (float or sequence):
+            mean for all values or sequence of means for each channel.
         std (float or sequence):
     """
     def __init__(self, mean=0, std=1):

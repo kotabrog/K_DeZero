@@ -22,15 +22,19 @@ def sum_to(x, shape):
 
 
 def reshape_sum_backward(gy, x_shape, axis, keepdims):
-    """Reshape gradient appropriately for dezero.functions.sum's backward.
+    """Reshape gradient appropriately for kdezero.functions.sum's backward.
+
     Args:
-        gy (dezero.Variable): Gradient variable from the output by backprop.
-        x_shape (tuple): Shape used at sum function's forward.
-        axis (None or int or tuple of ints): Axis used at sum function's
-            forward.
-        keepdims (bool): Keepdims used at sum function's forward.
+        gy (kdezero.Variable):
+            Gradient variable from the output by backprop.
+        x_shape (tuple):
+            Shape used at sum function's forward.
+        axis (None or int or tuple of ints):
+            Axis used at sum function's forward.
+        keepdims (bool):
+            Keepdims used at sum function's forward.
     Returns:
-        dezero.Variable: Gradient variable which is reshaped appropriately
+        kdezero.Variable: Gradient variable which is reshaped appropriately
     """
     ndim = len(x_shape)
     tupled_axis = axis
@@ -52,6 +56,15 @@ def reshape_sum_backward(gy, x_shape, axis, keepdims):
 
 
 def logsumexp(x, axis=1):
+    """After exp, sum elements along axes, and apply log.
+
+    Args:
+        x (ndarray):
+        axis (int, optional): (default: 1)
+
+    Returns:
+        ndarray:
+    """
     xp = cuda.get_array_module(x)
     m = x.max(axis=axis, keepdims=True)
     y = x - m
