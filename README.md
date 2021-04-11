@@ -8,26 +8,39 @@ This library is an my improved version of "Deep Learning from Basic 3".
 ## Requirement
 
 - Python3.8
+- If you use gpu, cupy
+- If you want to visualize the model, install graphviz
 - For details, see requirements.txt
 
 ## Usage
 
+Method1:
+```
+pip install kdezero
+```
+
+Method2:
 ```
 git clone https://github.com/kotabrog/K_DeZero.git
 cd kdezero
 python setup.py sdist
-pip install dist\kdezero-1.5.tar.gz
+pip install dist\kdezero-1.6.tar.gz
 ```
 
-This will install the library "kdezero".
+Then you will be able to use "kdezero".
 
 ## sample
 
-Soon.
+Look at [samples](https://github.com/kotabrog/K_DeZero/tree/main/samples).
 
 ## Features
 
-Soon.
+This library can:
+
+- Backpropagation-enabled variables can be used like numpy
+- Contains basic machine learning parts
+- Some support gpu
+- Visualize model configuration using graphviz
 
 ## Author
 
