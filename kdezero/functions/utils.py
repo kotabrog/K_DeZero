@@ -20,6 +20,8 @@ class Linear(Function):
 
 
 def linear(x, W, b=None):
+    """y = x * W + b
+    """
     return Linear()(x, W, b)
 
 

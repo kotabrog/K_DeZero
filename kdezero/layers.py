@@ -7,10 +7,18 @@ from kdezero import cuda
 
 
 class Layer:
+    """Layer class
+
+    Attribute:
+        inputs (list of kdezero.Variable):
+        outputs (list of kdezero.Variable):
+    """
     def __init__(self):
         self._params = set()
 
     def __setattr__(self, name, value):
+        """If Value is an instance of paramater, add it to params
+        """
         if isinstance(value, (Parameter, Layer)):
             self._params.add(name)
         super().__setattr__(name, value)
@@ -27,6 +35,11 @@ class Layer:
         raise NotImplementedError()
 
     def params(self):
+        """Returns the variables registered as parameters in sequence
+
+        yields:
+            Parameter or Layer:
+        """
         for name in self._params:
             obj = self.__dict__[name]
 
@@ -36,14 +49,20 @@ class Layer:
                 yield obj
 
     def cleargrads(self):
+        """Reset parameter gradient
+        """
         for param in self.params():
             param.cleargrad()
 
     def to_cpu(self):
+        """Convert parameter data to cpu support
+        """
         for param in self.params():
             param.to_cpu()
 
     def to_gpu(self):
+        """Convert parameter data to gpu support
+        """
         for param in self.params():
             param.to_gpu()
 
@@ -58,6 +77,11 @@ class Layer:
                 params_dict[key] = obj
 
     def save_weights(self, path):
+        """Save parameters in npz format
+
+        Args:
+            path (str): File path
+        """
         self.to_cpu()
 
         params_dict = {}
@@ -72,6 +96,11 @@ class Layer:
             raise
 
     def load_weights(self, path):
+        """Load the weight saved by 'save_weights'
+
+        Args:
+            path (str): File path
+        """
         npz = np.load(path)
         params_dict = {}
         self._flatten_params(params_dict)
