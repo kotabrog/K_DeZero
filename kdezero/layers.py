@@ -7,10 +7,18 @@ from kdezero import cuda
 
 
 class Layer:
+    """Layer class
+
+    Attribute:
+        inputs (list of kdezero.Variable):
+        outputs (list of kdezero.Variable):
+    """
     def __init__(self):
         self._params = set()
 
     def __setattr__(self, name, value):
+        """If Value is an instance of paramater, add it to params
+        """
         if isinstance(value, (Parameter, Layer)):
             self._params.add(name)
         super().__setattr__(name, value)
@@ -27,6 +35,11 @@ class Layer:
         raise NotImplementedError()
 
     def params(self):
+        """Returns the variables registered as parameters in sequence
+
+        yields:
+            Parameter or Layer:
+        """
         for name in self._params:
             obj = self.__dict__[name]
 
@@ -36,14 +49,20 @@ class Layer:
                 yield obj
 
     def cleargrads(self):
+        """Reset parameter gradient
+        """
         for param in self.params():
             param.cleargrad()
 
     def to_cpu(self):
+        """Convert parameter data to cpu support
+        """
         for param in self.params():
             param.to_cpu()
 
     def to_gpu(self):
+        """Convert parameter data to gpu support
+        """
         for param in self.params():
             param.to_gpu()
 
@@ -58,6 +77,11 @@ class Layer:
                 params_dict[key] = obj
 
     def save_weights(self, path):
+        """Save parameters in npz format
+
+        Args:
+            path (str): File path
+        """
         self.to_cpu()
 
         params_dict = {}
@@ -72,6 +96,11 @@ class Layer:
             raise
 
     def load_weights(self, path):
+        """Load the weight saved by 'save_weights'
+
+        Args:
+            path (str): File path
+        """
         npz = np.load(path)
         params_dict = {}
         self._flatten_params(params_dict)
@@ -241,3 +270,33 @@ class LSTM(Layer):
         h_new = o * F.tanh(c_new)
         self.h, self.c = h_new, c_new
         return h_new
+
+
+class BatchNorm(Layer):
+    def __init__(self):
+        super().__init__()
+        # '.avg_mean' and '.avg_var' are 'Parameter' objects, so they will be
+        # saved to a file (using 'save_weights()').
+        # But they don't need grads, so they're just used as 'ndarray'.
+        self.avg_mean = Parameter(None, name='avg_mean')
+        self.avg_var = Parameter(None, name='avg_var')
+        self.gamma = Parameter(None, name='gamma')
+        self.beta = Parameter(None, name='beta')
+
+    def _init_params(self, x):
+        xp = cuda.get_array_module(x)
+        D = x.shape[1]
+        if self.avg_mean.data is None:
+            self.avg_mean.data = xp.zeros(D, dtype=x.dtype)
+        if self.avg_var.data is None:
+            self.avg_var.data = xp.ones(D, dtype=x.dtype)
+        if self.gamma.data is None:
+            self.gamma.data = xp.ones(D, dtype=x.dtype)
+        if self.beta.data is None:
+            self.beta.data = xp.zeros(D, dtype=x.dtype)
+
+    def __call__(self, x):
+        if self.avg_mean.data is None:
+            self._init_params(x)
+        return F.batch_norm(x, self.gamma, self.beta,
+                            self.avg_mean.data, self.avg_var.data)

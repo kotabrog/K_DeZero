@@ -5,7 +5,18 @@ from kdezero import utils
 
 
 class Model(L.Layer):
+    """Model class
+    """
     def plot(self, *inputs, to_file='model.png'):
+        """Display the calculation graph of model
+
+        Args:
+            inputs (kdezero.Variables):
+            to_file (str, optional): File path (default: model.png)
+
+        Note:
+            You need to install graphviz.
+        """
         y = self.forward(*inputs)
         return utils.plot_dot_graph(y, verbose=True, to_file=to_file)
 
