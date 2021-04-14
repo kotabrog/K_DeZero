@@ -1,5 +1,5 @@
 import kdezero
-from kdezero import as_variable, as_array, Variable, Function
+from kdezero import as_variable, Function
 from kdezero import cuda
 from kdezero.functions.ndarray_functions import matmul, sum_to, sum
 
@@ -109,15 +109,6 @@ def batch_norm(x, gamma, beta, mean, var, decay=0.9, eps=2e-5):
     x.ndim only supports 2 or 4
     """
     return BatchNorm(mean, var, decay, eps)(x, gamma, beta)
-
-
-def accuracy(y, t):
-    y, t = as_variable(y), as_variable(t)
-
-    pred = y.data.argmax(axis=1).reshape(t.shape)
-    result = (pred == t.data)
-    acc = result.mean()
-    return Variable(as_array(acc))
 
 
 def dropout(x, dropout_ratio=0.5):

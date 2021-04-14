@@ -4,6 +4,7 @@ import kdezero.functions as F
 from kdezero import utils
 from kdezero import cuda
 from kdezero import optimizers
+from kdezero import no_grad
 
 
 class Model(L.Layer):
@@ -12,26 +13,41 @@ class Model(L.Layer):
     def __init__(self):
         super().__init__()
         self.done_compile = False
-
+        self.gpu = False
 
     def compile(self,
-              optimizer=optimizers.Adam(),
-              loss=F.softmax_cross_entropy,
-              max_epoch=100,
-              acc=None,
-              gpu=False,
-              verbose=1):
+                optimizer=optimizers.Adam(),
+                loss=F.softmax_cross_entropy,
+                acc=None):
         """Make settings for training
 
         Args:
             optimizer (kdezero.Optimizer, optional):
-            loss (kdezero.Function): Loss function.
-            max_epoch (int):
-            acc (None or kdezero.Function):
+            loss (kdezero.Function, optional): Loss function.
+            acc (None or kdezero.Function, optional):
                 Evaluation function. 
                 If None, acc will not be output to the running output.
-            gpu (bool): If True, use gpu.
-            verbose (int):
+
+        Returns:
+            kdezero.Model: Return self.
+        """
+        self.loss = loss
+        self.acc = acc
+        self.optimizer = optimizer.setup(self)
+        self.done_compile = True
+
+    def fit_generator(self,
+                      data_loader,
+                      max_epoch=100,
+                      gpu=False,
+                      verbose=1):
+        """Train with a data loader.
+
+        Args:
+            data_loader (kdezero.DataLoader):
+            max_epoch (int, optional):
+            gpu (bool, optional): If True, use gpu.
+            verbose (int, optional):
                 Determine the method of output being performed, depending on the numbers given.
                 examples:
                     1. epoch: 1
@@ -39,34 +55,22 @@ class Model(L.Layer):
                        epoch: 2
                        train loss: 0.07954498826215664, accuracy: 0.97465
                        ...
-
-        Returns:
-            kdezero.Model: Return self.
-        """
-        self.loss = loss
-        self.max_epoch = max_epoch
-        self.acc = acc
-        self.gpu = gpu
-        self.verbose = verbose
-        self.optimizer = optimizer.setup(self)
-        self.done_compile = True
-
-    def fit_generator(self, data_loader):
-        """Train with a data loader.
-
-        Args:
-            data_loader (kdezero.DataLoader):
         """
         if not self.done_compile:
             raise Exception("Compilation is not complete")
 
-        if cuda.gpu_enable and self.gpu:
+        self.gpu = gpu
+        if cuda.gpu_enable and gpu:
             data_loader.to_gpu()
             self.to_gpu()
-            if self.verbose > 0:
+            if verbose > 0:
                 print('set gpu')
-        
-        for epoch in range(self.max_epoch):
+        else:
+            data_loader.to_cpu()
+            self.to_cpu()
+
+        data_loader.reset()
+        for epoch in range(max_epoch):
             sum_loss, sum_acc = 0, 0
 
             for x, t in data_loader:
@@ -82,12 +86,58 @@ class Model(L.Layer):
                 if self.acc:
                     sum_acc += float(acc.data) * len(t)
 
-            if self.verbose > 0:
+            if verbose > 0:
                 print('epoch: {}'.format(epoch + 1))
                 print('train loss: {}, accuracy: {}'.format(
                     sum_loss / data_loader.data_size, sum_acc / data_loader.data_size))
 
         return self
+
+    def evaluate(self, data_loader, gpu=None):
+        """Evaluate the test data set
+
+        Args:
+            data_loader (kdezero.DataLoader):
+            gpu (None or bool, optional):
+                If True, use gpu. If None, use the mode of train.
+
+        Returns:
+            tuple of float: return (loss, acc)
+        """
+        if self.acc is None:
+            raise Exception("Metrics is not set.")
+
+        if gpu is None:
+            gpu = self.gpu
+        if cuda.gpu_enable and gpu:
+            data_loader.to_gpu()
+            self.to_gpu()
+        else:
+            data_loader.to_cpu()
+            self.to_cpu()
+
+        sum_loss, sum_acc = 0, 0
+        data_loader.reset()
+        with no_grad():
+            for x, t in data_loader:
+                y = self(x)
+                loss = self.loss(y, t)
+                acc = self.acc(y, t)
+                sum_loss += float(loss.data) * len(t)
+                sum_acc += float(acc.data) * len(t)
+        return sum_loss / data_loader.data_size, sum_acc / data_loader.data_size
+
+    def predict(self, x, gpu=None):
+        if gpu is None:
+            gpu = self.gpu
+        if cuda.gpu_enable and gpu:
+            x = cuda.as_cupy(x)
+            self.to_gpu()
+        else:
+            x = cuda.as_numpy(x)
+            self.to_cpu()
+
+        return self(x)
 
     def plot(self, *inputs, to_file='model.png'):
         """Display the calculation graph of model
@@ -114,7 +164,7 @@ class Sequential(Model):
         super().__init__()
         self.layers = []
         for i, layer in enumerate(layers):
-            setattr(self, 'l' + str(i), layers)
+            setattr(self, 'l' + str(i), layer)
             self.layers.append(layer)
 
     def forward(self, x):

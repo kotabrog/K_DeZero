@@ -28,9 +28,10 @@ from kdezero.functions.activation_functions import softmax
 from kdezero.functions.loss_functions import mean_squared_error
 from kdezero.functions.loss_functions import softmax_cross_entropy
 
+from kdezero.functions.metrics import accuracy
+
 from kdezero.functions.utils import linear
 from kdezero.functions.utils import batch_norm
-from kdezero.functions.utils import accuracy
 from kdezero.functions.utils import dropout
 
 from kdezero.functions.conv_functions import conv2d
