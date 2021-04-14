@@ -10,9 +10,11 @@ from kdezero.core import setup_variable
 from kdezero.core import Config
 from kdezero.layers import Layer
 from kdezero.models import Model
+from kdezero.models import Sequential
 from kdezero.datasets import Dataset
 from kdezero.dataloaders import DataLoader
 from kdezero.dataloaders import SeqDataLoader
+from kdezero.optimizers import Optimizer
 
 import kdezero.datasets
 import kdezero.dataloaders
