@@ -24,7 +24,7 @@ Method2:
 git clone https://github.com/kotabrog/K_DeZero.git
 cd kdezero
 python setup.py sdist
-pip install dist\kdezero-2.0.tar.gz
+pip install dist\kdezero-2.1.tar.gz
 ```
 
 Then you will be able to use "kdezero".
