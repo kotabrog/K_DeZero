@@ -5,6 +5,7 @@ from kdezero import utils
 from kdezero import cuda
 from kdezero import optimizers
 from kdezero import no_grad
+from kdezero import History
 
 
 class Model(L.Layer):
@@ -69,6 +70,8 @@ class Model(L.Layer):
             data_loader.to_cpu()
             self.to_cpu()
 
+        history = History()
+
         data_loader.reset()
         for epoch in range(max_epoch):
             sum_loss, sum_acc = 0, 0
@@ -86,12 +89,18 @@ class Model(L.Layer):
                 if self.acc:
                     sum_acc += float(acc.data) * len(t)
 
+            loss = sum_loss / data_loader.data_size
+            if self.acc:
+                acc = sum_acc / data_loader.data_size
+
+            history.update(loss, acc)
+
             if verbose > 0:
                 print('epoch: {}'.format(epoch + 1))
                 print('train loss: {}, accuracy: {}'.format(
-                    sum_loss / data_loader.data_size, sum_acc / data_loader.data_size))
+                    loss, acc))
 
-        return self
+        return history
 
     def evaluate(self, data_loader, gpu=None):
         """Evaluate the test data set

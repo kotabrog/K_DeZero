@@ -8,6 +8,7 @@ from kdezero.core import as_array
 from kdezero.core import as_variable
 from kdezero.core import setup_variable
 from kdezero.core import Config
+from kdezero.logger import History
 from kdezero.layers import Layer
 from kdezero.models import Model
 from kdezero.models import Sequential
@@ -18,9 +19,11 @@ from kdezero.optimizers import Optimizer
 
 import kdezero.datasets
 import kdezero.dataloaders
+import kdezero.logger
 import kdezero.optimizers
 import kdezero.functions
 import kdezero.layers
+import kdezero.models
 import kdezero.utils
 import kdezero.cuda
 import kdezero.transforms
