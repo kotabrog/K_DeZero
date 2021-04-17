@@ -6,6 +6,7 @@ from kdezero import cuda
 from kdezero import optimizers
 from kdezero import no_grad
 from kdezero import History
+from kdezero.logger import CalculateHistory
 
 
 class Model(L.Layer):
@@ -71,34 +72,31 @@ class Model(L.Layer):
             self.to_cpu()
 
         history = History()
+        calc_history = CalculateHistory(self.loss, self.acc)
 
         data_loader.reset()
         for epoch in range(max_epoch):
-            sum_loss, sum_acc = 0, 0
+            calc_history.reset()
 
             for x, t in data_loader:
                 y = self(x)
                 loss = self.loss(y, t)
+                acc = None
                 if self.acc:
                     acc = self.acc(y, t)
                 self.cleargrads()
                 loss.backward()
                 self.optimizer.update()
 
-                sum_loss += float(loss.data) * len(t)
-                if self.acc:
-                    sum_acc += float(acc.data) * len(t)
+                calc_history.add_hist(len(t), loss, acc)
 
-            loss = sum_loss / data_loader.data_size
-            if self.acc:
-                acc = sum_acc / data_loader.data_size
-
-            history.update(loss, acc)
+            calc_history.mean_hist(data_loader.data_size)
+            history.update(calc_history.loss, calc_history.acc)
 
             if verbose > 0:
                 print('epoch: {}'.format(epoch + 1))
                 print('train loss: {}, accuracy: {}'.format(
-                    loss, acc))
+                    calc_history.loss, calc_history.acc))
 
         return history
 
@@ -125,16 +123,17 @@ class Model(L.Layer):
             data_loader.to_cpu()
             self.to_cpu()
 
-        sum_loss, sum_acc = 0, 0
+        calc_history = CalculateHistory(self.loss, self.acc)
         data_loader.reset()
         with no_grad():
             for x, t in data_loader:
                 y = self(x)
                 loss = self.loss(y, t)
                 acc = self.acc(y, t)
-                sum_loss += float(loss.data) * len(t)
-                sum_acc += float(acc.data) * len(t)
-        return sum_loss / data_loader.data_size, sum_acc / data_loader.data_size
+                calc_history.add_hist(len(t), loss, acc)
+
+        calc_history.mean_hist(data_loader.data_size)
+        return calc_history.loss, calc_history.acc
 
     def predict(self, x, gpu=None):
         if gpu is None:
