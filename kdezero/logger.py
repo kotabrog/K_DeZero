@@ -17,6 +17,7 @@ class History:
         self.val_acc = []
 
     def update(self, loss, acc=None, val_loss=None, val_acc=None):
+        """Update the history."""
         self.loss.append(loss)
         if acc is not None:
             self.acc.append(acc)
@@ -27,7 +28,9 @@ class History:
 
 
 class CalculateHistory:
-    def __init__(self, loss=None, acc=None, val_loss=None, val_acc=None):
+    """Class for calculating loss and accuracy
+    """
+    def __init__(self, loss=None, acc=None):
         if loss is not None:
             self.loss = 0.
         else:
@@ -36,42 +39,21 @@ class CalculateHistory:
             self.acc = 0.
         else:
             self.acc = None
-        if val_loss is not None:
-            self.val_loss = 0.
-        else:
-            self.val_loss = None
-        if val_acc is not None:
-            self.val_acc = 0.
-        else:
-            self.val_acc = None
 
     def reset(self):
         if self.loss is not None:
             self.loss = 0.
         if self.acc is not None:
             self.acc = 0.
-        if self.val_loss is not None:
-            self.val_loss = 0.
-        if self.val_acc is not None:
-            self.val_acc = 0.
 
-    def add_hist(self, batch_size,
-                 loss=None, acc=None, val_loss=None, val_acc=None):
+    def add_hist(self, batch_size, loss=None, acc=None):
         if loss is not None:
             self.loss += float(loss.data) * batch_size
         if acc is not None:
             self.acc += float(acc.data) * batch_size
-        if val_loss is not None:
-            self.val_loss += float(val_loss.data) * batch_size
-        if val_acc is not None:
-            self.val_acc += float(val_acc.data) * batch_size
 
     def mean_hist(self, data_size):
         if self.loss is not None:
             self.loss /= data_size
         if self.acc is not None:
             self.acc /= data_size
-        if self.val_loss is not None:
-            self.val_loss /= data_size
-        if self.val_acc is not None:
-            self.val_acc /= data_size

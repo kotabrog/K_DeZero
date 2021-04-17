@@ -40,6 +40,7 @@ class Model(L.Layer):
 
     def fit_generator(self,
                       data_loader,
+                      val_loader=None,
                       max_epoch=100,
                       gpu=False,
                       verbose=1):
@@ -47,6 +48,7 @@ class Model(L.Layer):
 
         Args:
             data_loader (kdezero.DataLoader):
+            val_loader (kdezero.DataLoader, optional):
             max_epoch (int, optional):
             gpu (bool, optional): If True, use gpu.
             verbose (int, optional):
@@ -64,19 +66,26 @@ class Model(L.Layer):
         self.gpu = gpu
         if cuda.gpu_enable and gpu:
             data_loader.to_gpu()
+            if val_loader:
+                val_loader.to_gpu()
             self.to_gpu()
             if verbose > 0:
                 print('set gpu')
         else:
             data_loader.to_cpu()
+            if val_loader:
+                val_loader.to_cpu()
             self.to_cpu()
 
         history = History()
-        calc_history = CalculateHistory(self.loss, self.acc)
+        calc_train_hist = CalculateHistory(self.loss, self.acc)
+        val_loss_flag = True if val_loader else None
+        val_acc_flag = True if val_loader and self.acc else None
+        eval_loss, eval_acc = None, None
 
         data_loader.reset()
         for epoch in range(max_epoch):
-            calc_history.reset()
+            calc_train_hist.reset()
 
             for x, t in data_loader:
                 y = self(x)
@@ -88,15 +97,23 @@ class Model(L.Layer):
                 loss.backward()
                 self.optimizer.update()
 
-                calc_history.add_hist(len(t), loss, acc)
+                calc_train_hist.add_hist(len(t), loss, acc)
 
-            calc_history.mean_hist(data_loader.data_size)
-            history.update(calc_history.loss, calc_history.acc)
+            if val_loader:
+                eval_loss, eval_acc = self.evaluate(val_loader, gpu)
+
+            calc_train_hist.mean_hist(data_loader.data_size)
+
+            history.update(calc_train_hist.loss, calc_train_hist.acc,
+                           eval_loss, eval_acc)
 
             if verbose > 0:
                 print('epoch: {}'.format(epoch + 1))
                 print('train loss: {}, accuracy: {}'.format(
-                    calc_history.loss, calc_history.acc))
+                      calc_train_hist.loss, calc_train_hist.acc))
+                if val_loader:
+                    print('val loss: {}, accuracy: {}'.format(
+                        eval_loss, eval_acc))
 
         return history
 
@@ -111,9 +128,6 @@ class Model(L.Layer):
         Returns:
             tuple of float: return (loss, acc)
         """
-        if self.acc is None:
-            raise Exception("Metrics is not set.")
-
         if gpu is None:
             gpu = self.gpu
         if cuda.gpu_enable and gpu:
@@ -129,7 +143,9 @@ class Model(L.Layer):
             for x, t in data_loader:
                 y = self(x)
                 loss = self.loss(y, t)
-                acc = self.acc(y, t)
+                acc = None
+                if self.acc:
+                    acc = self.acc(y, t)
                 calc_history.add_hist(len(t), loss, acc)
 
         calc_history.mean_hist(data_loader.data_size)
