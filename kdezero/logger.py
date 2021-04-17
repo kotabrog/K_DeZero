@@ -1,3 +1,6 @@
+import matplotlib.pyplot as plt
+
+
 class History:
     """Class to record learning results
 
@@ -25,6 +28,36 @@ class History:
             self.val_loss.append(val_loss)
         if val_acc is not None:
             self.val_acc.append(val_acc)
+
+    def plot(self, save=None):
+        epoch = len(self.loss)
+        x = range(1, epoch + 1)
+        fig = plt.figure()
+
+        ax1 = fig.add_subplot(111)
+        if self.loss:
+            ax1.plot(x, self.loss, 'C0', label='loss')
+        if self.val_loss:
+            ax1.plot(x, self.val_loss, 'C0', linestyle='--', label='val_loss')
+
+        ax2 = ax1.twinx()
+        if self.acc:
+            ax2.plot(x, self.acc, 'C1', label='acc')
+        if self.val_acc:
+            ax2.plot(x, self.val_acc, 'C1', linestyle='--', label='val_acc')
+
+        h1, l1 = ax1.get_legend_handles_labels()
+        h2, l2 = ax2.get_legend_handles_labels()
+        ax1.legend(h1+h2, l1+l2, loc='lower right')
+
+        ax1.set_xlabel('epoch')
+        ax1.set_ylabel('loss')
+        ax1.grid(True)
+        ax2.set_ylabel('acc')
+        if save is None:
+            plt.show()
+        else:
+            plt.savefig(save)
 
 
 class CalculateHistory:
